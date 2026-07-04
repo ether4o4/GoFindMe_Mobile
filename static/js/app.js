@@ -47,31 +47,46 @@ function brandmark(withTag = true) {
 }
 
 /* ------------------------------ auth screens ---------------------------- */
+// onSubmit receives a `showErr` callback so failures render inline on the card
+// (a bottom toast is easily hidden behind the phone keyboard).
 function authShell(title, subtitle, inputs, submitText, onSubmit) {
   clear(app);
+  const err = el("div", { class: "auth-err hidden", role: "alert", "aria-live": "assertive" });
+  const showErr = msg => { err.textContent = msg || ""; err.classList.toggle("hidden", !msg); };
+  let busy = false;
+  const submit = async () => {
+    if (busy) return;
+    busy = true; showErr("");
+    try { await onSubmit(showErr); } finally { busy = false; }
+  };
   const card = el("div", { class: "authcard" }, [
     brandmark(),
     el("h1", { text: title }),
     el("div", { class: "sub", text: subtitle }),
     el("div", { class: "col", style: "margin-top:8px" }, [
       ...Object.entries(inputs).map(([k, i]) => field(k, i)),
-      button(submitText, { cls: "primary block lg", onclick: onSubmit }),
+      err,
+      button(submitText, { cls: "primary block lg", onclick: submit }),
     ]),
   ]);
-  Object.values(inputs).forEach(i => i.addEventListener("keydown", e => { if (e.key === "Enter") onSubmit(); }));
+  Object.values(inputs).forEach(i => i.addEventListener("keydown", e => { if (e.key === "Enter") submit(); }));
   app.append(el("div", { class: "authwrap" }, [card]));
 }
 
 function showSetup() {
   const inputs = {
     Username: el("input", { autocomplete: "username", placeholder: "e.g. analyst" }),
-    Password: el("input", { type: "password", autocomplete: "new-password", placeholder: "min 8 characters" }),
+    Password: el("input", { type: "password", autocomplete: "new-password", placeholder: "at least 8 characters" }),
   };
-  authShell("Create owner account", "One-time setup for this console.", inputs, "Create account", async () => {
+  authShell("Create owner account", "One-time setup for this console.", inputs, "Create account", async showErr => {
+    const username = inputs.Username.value.trim();
+    const password = inputs.Password.value;
+    if (!username) return showErr("Enter a username.");
+    if (password.length < 8) return showErr("Password must be at least 8 characters.");
     try {
-      const r = await api.post("/api/auth/setup", { username: inputs.Username.value, password: inputs.Password.value });
-      setToken(r.token); me = { username: inputs.Username.value }; renderShell();
-    } catch (e) { toast(e.message, true); }
+      const r = await api.post("/api/auth/setup", { username, password });
+      setToken(r.token); me = { username }; renderShell();
+    } catch (e) { showErr(e.message); }
   });
 }
 
@@ -80,11 +95,14 @@ function showLogin() {
     Username: el("input", { autocomplete: "username" }),
     Password: el("input", { type: "password", autocomplete: "current-password" }),
   };
-  authShell("Sign in", "Access your investigations console.", inputs, "Sign in", async () => {
+  authShell("Sign in", "Access your investigations console.", inputs, "Sign in", async showErr => {
+    const username = inputs.Username.value.trim();
+    const password = inputs.Password.value;
+    if (!username || !password) return showErr("Enter your username and password.");
     try {
-      const r = await api.post("/api/auth/login", { username: inputs.Username.value, password: inputs.Password.value });
-      setToken(r.token); me = { username: inputs.Username.value }; renderShell();
-    } catch (e) { toast(e.message, true); }
+      const r = await api.post("/api/auth/login", { username, password });
+      setToken(r.token); me = { username }; renderShell();
+    } catch (e) { showErr(e.message); }
   });
 }
 
