@@ -45,8 +45,13 @@ chaquopy {
         pip {
             // Pure-Python on Android: FastAPI + pydantic v1 (v2's Rust core
             // won't build), plain uvicorn, httpx, passlib (pbkdf2 fallback).
-            install 'fastapi'
-            install 'pydantic<2'
+            // FastAPI must be pinned to a build that defines IncEx locally rather
+            // than importing it from pydantic.main — the 0.110–0.115 range does
+            // `from pydantic.main import IncEx`, which doesn't exist under
+            // pydantic v1 and crashes app import on device. 0.125.0 is verified
+            // to import and serve under pydantic 1.10.
+            install 'fastapi==0.125.0'
+            install 'pydantic>=1.10,<2'
             install 'uvicorn'
             install 'httpx'
             install 'passlib'
