@@ -1,0 +1,39 @@
+GoFindMe Investigations Console — Software License
+Copyright (c) 2026 GoFindMe. All rights reserved.
+
+1. GRANT (EVALUATION & INTERNAL USE)
+   Subject to these terms, you are granted a non-exclusive, non-transferable,
+   revocable license to install and use GoFindMe for the purposes of evaluation,
+   internal testing, and lawful, authorized investigations that you are entitled
+   to conduct. You may run the software on infrastructure you control, including
+   on-premises and air-gapped deployments.
+
+2. COMMERCIAL & GOVERNMENT LICENSING
+   Production deployment, resale, distribution, hosting as a service, or use on
+   behalf of third parties requires a separate written commercial or government
+   license. Contact the copyright holder to obtain one.
+
+3. RESTRICTIONS
+   You may not: (a) remove or alter copyright, attribution, or integrity notices;
+   (b) sublicense, sell, or redistribute the software except as expressly
+   permitted; or (c) use the software to conduct surveillance or investigations
+   you are not lawfully authorized to perform.
+
+4. AUTHORIZED USE ONLY
+   GoFindMe executes reconnaissance tooling and queries third-party services. You
+   are solely responsible for ensuring that every investigation you conduct is
+   lawful, authorized, and compliant with all applicable laws, regulations, and
+   the terms of service of any queried provider.
+
+5. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+   IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+   FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT.
+
+6. LIMITATION OF LIABILITY
+   IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+   DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT, OR
+   OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE SOFTWARE OR THE USE
+   OR OTHER DEALINGS IN THE SOFTWARE.
+
+For commercial, enterprise, or government licensing, contact the copyright holder.

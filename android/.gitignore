@@ -1,0 +1,15 @@
+# Gradle / build output
+.gradle/
+build/
+app/build/
+local.properties
+
+# Gradle wrapper is generated in CI (keeps the binary jar out of git)
+gradle/
+gradlew
+gradlew.bat
+
+# Python sources are staged into the app at build time by the CI workflow
+app/src/main/python/app/
+app/src/main/python/static/
+app/src/main/python/legacy/

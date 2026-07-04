@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GoFindMe · OSINT Console</title>
+<style>
+  :root{
+    --bg:#0b0b0d;--surface:#15151a;--surface2:#1d1d24;--border:#2a2a33;
+    --text:#f2f2f5;--muted:#959aa5;--accent:#5ed1a0;--accent2:#4f86f7;
+    --warn:#f7b731;--danger:#e2554e;--radius:13px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  code,.mono{font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 22px}
+  a{color:var(--accent2);text-decoration:none}a:hover{text-decoration:underline}
+
+  header{border-bottom:1px solid var(--border);background:linear-gradient(180deg,#121216,var(--bg));padding:26px 0 0}
+  .brand{display:flex;align-items:center;gap:13px}
+  .logo{width:44px;height:44px;border-radius:12px;background:var(--accent);display:grid;place-items:center;font-weight:800;font-size:20px;color:#0b0b0d}
+  h1{font-size:22px;font-weight:760;letter-spacing:-.4px}
+  .sub{color:var(--muted);font-size:13px}
+  .tabs{display:flex;gap:2px;margin-top:20px;flex-wrap:wrap}
+  .tab{cursor:pointer;padding:11px 16px;font-size:13.5px;font-weight:640;color:var(--muted);border:none;background:none;border-bottom:2px solid transparent}
+  .tab:hover{color:var(--text)}.tab.active{color:var(--text);border-bottom-color:var(--accent)}
+
+  main{padding:24px 0 70px}
+  .banner{display:flex;gap:11px;background:rgba(247,183,49,.08);border:1px solid rgba(247,183,49,.3);border-radius:var(--radius);padding:12px 15px;font-size:12.5px;color:#e9d6a8;margin-bottom:22px}
+  .banner b{color:var(--warn)}
+
+  .searchbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  input,select,textarea{background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-size:14px;padding:12px 14px}
+  input::placeholder{color:var(--muted)}
+  input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+  .target{flex:1;min-width:260px;font-size:16px}
+  .btn{cursor:pointer;border:1px solid var(--border);background:var(--surface);color:var(--text);font-weight:640;font-size:13.5px;padding:12px 17px;border-radius:10px;white-space:nowrap}
+  .btn:hover{border-color:#3a3a46}
+  .btn.primary{background:var(--accent);color:#0b0b0d;border-color:var(--accent)}
+  .btn.ghost{background:none}.btn.sm{padding:6px 11px;font-size:12px}
+  .btn.danger{color:var(--danger);border-color:rgba(226,85,78,.4)}
+
+  .cats{display:flex;gap:7px;flex-wrap:wrap;margin:15px 0 6px}
+  .chip{cursor:pointer;font-size:12.5px;font-weight:620;padding:8px 14px;border-radius:999px;border:1px solid var(--border);background:var(--surface);color:var(--muted)}
+  .chip.active{background:var(--accent);color:#0b0b0d;border-color:var(--accent)}
+  .detected{font-size:12px;color:var(--muted);margin-top:8px}.detected b{color:var(--accent)}
+
+  .history{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px;align-items:center}
+  .history .lbl{font-size:11.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+  .htag{cursor:pointer;font-size:12px;background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 9px;color:var(--text)}
+  .htag:hover{border-color:var(--accent)}
+
+  h2{font-size:12.5px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--muted);margin:28px 0 12px;display:flex;align-items:center;gap:9px}
+  h2 .count{color:var(--accent);font-weight:700}
+
+  .groups{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));gap:14px}
+  .group{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+  .group .gh{font-weight:720;font-size:15px;margin-bottom:11px;display:flex;align-items:center;gap:8px}
+  .group .gh .ic{font-size:17px}
+  .src{display:flex;align-items:center;gap:9px;padding:8px 0;border-top:1px solid var(--border)}
+  .src:first-of-type{border-top:none}
+  .src .nm{font-weight:600;font-size:13.5px;flex:1;display:flex;align-items:center;gap:7px}
+  .src .ty{font-size:10px;font-weight:700;padding:2px 6px;border-radius:5px;background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
+  .src .ty.cli{color:#cfe9dd}.src .ty.web{color:#bcd2ff}
+  .src .keyb{font-size:10px;font-weight:700;color:var(--warn)}
+  .src .keyb.ok{color:var(--accent)}
+  .src .act{display:flex;gap:6px}
+
+  .covgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:4px}
+  .cov{font-size:12.5px;color:var(--muted);background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:9px 12px}
+  .cov b{color:var(--accent);margin-right:5px}
+
+  .vault-svc{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:11px 13px;margin-bottom:9px}
+  .vault-svc label{width:128px;font-weight:620;font-size:13px}.vault-svc input{flex:1}
+  .lockbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:16px}
+  .state{font-size:13px;font-weight:620;display:flex;align-items:center;gap:8px}
+  .dot{width:9px;height:9px;border-radius:50%}.dot.locked{background:var(--accent)}.dot.open{background:var(--warn)}.dot.plain{background:var(--danger)}
+
+  .dfir{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}
+  .dcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:15px}
+  .dcard .dn{font-weight:680;font-size:14px;display:flex;justify-content:space-between;gap:8px;align-items:center}
+  .dcard .dd{color:var(--muted);font-size:12.5px;margin-top:5px}
+  .dtag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:5px;border:1px solid var(--border);color:var(--muted)}
+
+  textarea.notes{width:100%;min-height:330px;resize:vertical;line-height:1.6;font-size:13.5px}
+  .hint{color:var(--muted);font-size:12.5px;margin-top:9px}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--accent);color:#0b0b0d;font-weight:700;font-size:13px;padding:10px 18px;border-radius:10px;opacity:0;transition:.2s;pointer-events:none;z-index:50}
+  .toast.show{opacity:1}
+  .hidden{display:none}.empty{color:var(--muted);font-size:13.5px;padding:30px 0}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="brand">
+      <div class="logo">⌖</div>
+      <div><h1>GoFindMe</h1><div class="sub">Local OSINT console · search-all · command builder · pivots · encrypted vault</div></div>
+    </div>
+    <div class="tabs">
+      <button class="tab active" data-tab="dash">Dashboard</button>
+      <button class="tab" data-tab="coverage">Coverage</button>
+      <button class="tab" data-tab="vault">API Vault</button>
+      <button class="tab" data-tab="dfir">DFIR Toolkit</button>
+      <button class="tab" data-tab="notes">Case Notes</button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="banner">
+    <span>⚠️</span>
+    <div><b>Authorized use only.</b> Runs entirely in your browser — nothing leaves this device. It <b>assembles commands</b> and <b>opens web lookups</b>; it does not execute tools or call key-gated APIs directly (browser CORS). Investigate only targets you are authorized to investigate, and respect each service's terms.</div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <section id="tab-dash">
+    <div class="searchbar">
+      <input class="target" id="target" placeholder="Enter a target — username, email, phone, real name, domain, IP, hash, or BTC address" autocomplete="off">
+      <button class="btn primary" id="searchAll">⚡ Search All</button>
+    </div>
+    <div class="cats" id="cats"></div>
+    <div class="detected" id="detected"></div>
+    <div class="history hidden" id="history"></div>
+    <div id="results"><div class="empty">Enter a target and press <b>Search All</b> to assemble the recon plan.</div></div>
+  </section>
+
+  <!-- COVERAGE -->
+  <section id="tab-coverage" class="hidden">
+    <h2>Capabilities</h2>
+    <div class="covgrid" id="covgrid"></div>
+    <div class="hint">Each capability maps to one or more sources surfaced on the Dashboard when you search a matching target type.</div>
+  </section>
+
+  <!-- VAULT -->
+  <section id="tab-vault" class="hidden">
+    <div class="lockbar">
+      <div class="state" id="vaultState"></div><div style="flex:1"></div>
+      <input type="password" id="passphrase" placeholder="Passphrase" class="hidden" style="width:170px">
+      <button class="btn" id="vaultUnlock">Unlock</button>
+      <button class="btn primary" id="vaultEncrypt">Encrypt &amp; lock</button>
+      <button class="btn" id="vaultDecrypt">Remove encryption</button>
+      <button class="btn danger" id="vaultClear">Clear</button>
+    </div>
+    <div id="vaultBody"></div>
+    <div class="hint">Keys live only in this browser's <span class="mono">localStorage</span>. With a passphrase they're encrypted (AES-256-GCM, PBKDF2-SHA-256, 200k iterations); the passphrase is never stored. Without one they sit in plaintext on this device.</div>
+  </section>
+
+  <!-- DFIR -->
+  <section id="tab-dfir" class="hidden">
+    <h2>Disk &amp; memory forensics · run on acquired images, not via this page</h2>
+    <div class="dfir" id="dfirGrid"></div>
+  </section>
+
+  <!-- NOTES -->
+  <section id="tab-notes" class="hidden">
+    <div class="searchbar" style="margin-bottom:12px">
+      <button class="btn" id="exportMd">Export report (.md)</button>
+      <button class="btn ghost" id="exportJson">Export (.json)</button>
+      <button class="btn ghost danger" id="clearNotes">Clear notes</button>
+    </div>
+    <textarea class="notes mono" id="notes" placeholder="# Case notes&#10;&#10;Target:&#10;Authorization / scope:&#10;Findings:&#10;- &#10;"></textarea>
+    <div class="hint">Auto-saved locally. Export bundles the current target + notes into a timestamped file.</div>
+  </section>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =================== registry =================== */
+const CATS = ["username","realname","email","phone","domain","ip","hash","bitcoin","image"];
+const CAT_LABEL = {username:"Username",realname:"Real Name",email:"Email",phone:"Phone",domain:"Domain",ip:"IP Address",hash:"Hash",bitcoin:"BTC Address",image:"Image / Reverse"};
+const CAT_ICON  = {username:"👤",realname:"🪪",email:"✉️",phone:"📞",domain:"🌐",ip:"📡",hash:"#️⃣",bitcoin:"₿",image:"🖼️"};
+
+// type: cli (copy command) | web (open url). key = service name needed (optional)
+const SRC = {
+  username:[
+    {n:"Sherlock",t:"cli",c:"sherlock {q}"},
+    {n:"Maigret",t:"cli",c:"maigret {q}"},
+    {n:"Blackbird",t:"cli",c:"python blackbird.py -u {q}"},
+    {n:"Nexfil",t:"cli",c:"python nexfil.py -u {q}"},
+    {n:"WhatsMyName",t:"web",u:"https://whatsmyname.app/?q={q}"},
+    {n:"GitHub",t:"web",u:"https://github.com/{q}"},
+    {n:"Reddit",t:"web",u:"https://www.reddit.com/user/{q}"},
+    {n:"X / Twitter",t:"web",u:"https://x.com/{q}"},
+    {n:"Instagram",t:"web",u:"https://www.instagram.com/{q}/"},
+    {n:"Google",t:"web",u:"https://www.google.com/search?q=%22{q}%22"},
+  ],
+  realname:[
+    {n:"Google",t:"web",u:"https://www.google.com/search?q=%22{q}%22"},
+    {n:"LinkedIn",t:"web",u:"https://www.linkedin.com/search/results/all/?keywords={q}"},
+    {n:"ThatsThem",t:"web",u:"https://thatsthem.com/name/{q}"},
+    {n:"Facebook",t:"web",u:"https://www.facebook.com/search/people/?q={q}"},
+  ],
+  email:[
+    {n:"Holehe",t:"cli",c:"holehe {q}"},
+    {n:"GHunt",t:"cli",c:"ghunt email {q}"},
+    {n:"h8mail",t:"cli",c:"h8mail -t {q}",key:"dehashed"},
+    {n:"Have I Been Pwned",t:"web",u:"https://haveibeenpwned.com/"},
+    {n:"EmailRep",t:"web",u:"https://emailrep.io/{q}"},
+    {n:"Hunter.io",t:"web",u:"https://hunter.io/email-verifier/{q}",key:"hunter"},
+    {n:"LeakCheck",t:"web",u:"https://leakcheck.io/",key:"leakcheck"},
+    {n:"DeHashed",t:"web",u:"https://dehashed.com/search?query={q}",key:"dehashed"},
+    {n:"Intelligence X",t:"web",u:"https://intelx.io/?s={q}",key:"intelx"},
+  ],
+  phone:[
+    {n:"PhoneInfoga",t:"cli",c:"phoneinfoga scan -n {q}"},
+    {n:"Truecaller",t:"web",u:"https://www.truecaller.com/search/us/{q}"},
+    {n:"Google",t:"web",u:"https://www.google.com/search?q=%22{q}%22"},
+  ],
+  domain:[
+    {n:"Subfinder",t:"cli",c:"subfinder -d {q} -all"},
+    {n:"Amass",t:"cli",c:"amass enum -passive -d {q}"},
+    {n:"Findomain",t:"cli",c:"findomain -t {q}"},
+    {n:"Assetfinder",t:"cli",c:"assetfinder --subs-only {q}"},
+    {n:"theHarvester",t:"cli",c:"theHarvester -d {q} -b all"},
+    {n:"gau",t:"cli",c:"gau {q}"},
+    {n:"waybackurls",t:"cli",c:"waybackurls {q}"},
+    {n:"katana",t:"cli",c:"katana -u https://{q}"},
+    {n:"hakrawler",t:"cli",c:"echo https://{q} | hakrawler"},
+    {n:"waymore",t:"cli",c:"waymore -i {q} -mode U"},
+    {n:"WHOIS",t:"cli",c:"whois {q}"},
+    {n:"crt.sh",t:"web",u:"https://crt.sh/?q={q}"},
+    {n:"Shodan",t:"web",u:"https://www.shodan.io/search?query={q}",key:"shodan"},
+    {n:"Censys",t:"web",u:"https://search.censys.io/search?resource=hosts&q={q}",key:"censys"},
+    {n:"SecurityTrails",t:"web",u:"https://securitytrails.com/domain/{q}/dns",key:"securitytrails"},
+    {n:"VirusTotal",t:"web",u:"https://www.virustotal.com/gui/domain/{q}",key:"virustotal"},
+    {n:"urlscan.io",t:"web",u:"https://urlscan.io/domain/{q}"},
+    {n:"AlienVault OTX",t:"web",u:"https://otx.alienvault.com/indicator/domain/{q}"},
+    {n:"DNSDumpster",t:"web",u:"https://dnsdumpster.com/"},
+    {n:"Wayback Machine",t:"web",u:"https://web.archive.org/web/*/{q}"},
+  ],
+  ip:[
+    {n:"Shodan CLI",t:"cli",c:"shodan host {q}",key:"shodan"},
+    {n:"WHOIS",t:"cli",c:"whois {q}"},
+    {n:"Shodan",t:"web",u:"https://www.shodan.io/host/{q}",key:"shodan"},
+    {n:"Censys",t:"web",u:"https://search.censys.io/hosts/{q}",key:"censys"},
+    {n:"GreyNoise",t:"web",u:"https://viz.greynoise.io/ip/{q}"},
+    {n:"AbuseIPDB",t:"web",u:"https://www.abuseipdb.com/check/{q}"},
+    {n:"VirusTotal",t:"web",u:"https://www.virustotal.com/gui/ip-address/{q}",key:"virustotal"},
+    {n:"AlienVault OTX",t:"web",u:"https://otx.alienvault.com/indicator/ip/{q}"},
+    {n:"ipinfo.io",t:"web",u:"https://ipinfo.io/{q}"},
+  ],
+  hash:[
+    {n:"VirusTotal CLI",t:"cli",c:"vt file {q}",key:"virustotal"},
+    {n:"VirusTotal",t:"web",u:"https://www.virustotal.com/gui/file/{q}",key:"virustotal"},
+    {n:"MalwareBazaar",t:"web",u:"https://bazaar.abuse.ch/browse.php?search=sha256%3A{q}"},
+    {n:"Hybrid Analysis",t:"web",u:"https://www.hybrid-analysis.com/search?query={q}"},
+    {n:"AlienVault OTX",t:"web",u:"https://otx.alienvault.com/indicator/file/{q}"},
+  ],
+  bitcoin:[
+    {n:"Blockchain.com",t:"web",u:"https://www.blockchain.com/explorer/addresses/btc/{q}"},
+    {n:"Blockchair",t:"web",u:"https://blockchair.com/bitcoin/address/{q}"},
+    {n:"OXT",t:"web",u:"https://oxt.me/address/{q}"},
+    {n:"BlockCypher",t:"web",u:"https://live.blockcypher.com/btc/address/{q}/"},
+    {n:"WalletExplorer",t:"web",u:"https://www.walletexplorer.com/address/{q}"},
+  ],
+  image:[
+    {n:"ExifTool (metadata)",t:"cli",c:"exiftool {q}"},
+    {n:"Google Lens",t:"web",u:"https://lens.google.com/"},
+    {n:"Yandex Images",t:"web",u:"https://yandex.com/images/"},
+    {n:"TinEye",t:"web",u:"https://tineye.com/"},
+    {n:"PimEyes",t:"web",u:"https://pimeyes.com/en"},
+    {n:"Bing Visual",t:"web",u:"https://www.bing.com/visualsearch"},
+  ],
+};
+
+const COVERAGE = ["Username","Email","Phone","Real Name","Domain","IP","Reverse Image","Metadata","Breaches","Social Media","Search Engines","DNS","Certificates","GitHub","Archive","WHOIS","Geolocation","Hash","Blockchain"];
+
+const SERVICES = ["shodan","censys","securitytrails","virustotal","hunter","emailrep","hibp","dehashed","leakcheck","intelx","github_token"];
+
+const DFIR = [
+  {n:"Autopsy",d:"GUI front-end to The Sleuth Kit; full disk-image analysis.",t:"disk",u:"https://www.autopsy.com/"},
+  {n:"The Sleuth Kit",d:"CLI suite for file-system & volume forensics.",t:"disk",u:"https://www.sleuthkit.org/"},
+  {n:"KAPE",d:"Targeted artifact collection & parsing.",t:"triage",u:"https://www.kroll.com/kape"},
+  {n:"Eric Zimmerman's Tools",d:"Registry, MFT, $J, jump-list & shimcache parsers.",t:"artifacts",u:"https://ericzimmerman.github.io/"},
+  {n:"FTK Imager",d:"Forensic imaging & evidence preview.",t:"imaging",u:"https://www.exterro.com/ftk-imager"},
+  {n:"Bulk Extractor",d:"Carve emails, URLs, cards & PII from raw images.",t:"carving"},
+  {n:"Velociraptor",d:"Endpoint visibility & live hunting at scale.",t:"live",u:"https://docs.velociraptor.app/"},
+  {n:"Plaso / log2timeline",d:"Build super-timelines from many artifact types.",t:"timeline",u:"https://plaso.readthedocs.io/"},
+  {n:"Magnet AXIOM",d:"Commercial mobile/computer/cloud forensics.",t:"suite"},
+  {n:"X-Ways Forensics",d:"Lightweight, deep low-level forensic suite.",t:"suite"},
+  {n:"EnCase",d:"Enterprise forensic investigation platform.",t:"suite"},
+  {n:"DB Browser for SQLite",d:"Inspect SQLite stores (history, cookies, app DBs).",t:"sqlite",u:"https://sqlitebrowser.org/"},
+  {n:"HxD",d:"Hex editor for raw bytes & file carving by hand.",t:"hex"},
+];
+
+/* =================== helpers =================== */
+const LS={enc:"gfm_vault_enc",plain:"gfm_vault_plain",notes:"gfm_notes",hist:"gfm_hist"};
+const state={cat:"auto",keys:{},encrypted:false,unlocked:true};
+const $=s=>document.querySelector(s);
+const el=(t,c)=>{const e=document.createElement(t);if(c)e.className=c;return e;};
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),1400);}
+function shQuote(s){return "'"+String(s).replace(/'/g,"'\\''")+"'";}
+function copy(txt){navigator.clipboard.writeText(txt).then(()=>toast("Copied"));}
+
+function detectCat(q){
+  if(!q) return null;
+  if(/^[0-9a-fA-F]{32}$|^[0-9a-fA-F]{40}$|^[0-9a-fA-F]{64}$/.test(q)) return "hash";
+  if(/^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,62}$/.test(q)) return "bitcoin";
+  if(/@/.test(q)) return "email";
+  if(/^(\d{1,3}\.){3}\d{1,3}$/.test(q) || /^[0-9a-fA-F:]+:[0-9a-fA-F:]+$/.test(q)) return "ip";
+  if(/^\+?[\d][\d\s().-]{6,}$/.test(q)) return "phone";
+  if(/^[a-z0-9-]+(\.[a-z0-9-]+)+$/i.test(q)) return "domain";
+  if(/\s/.test(q)) return "realname";
+  return "username";
+}
+
+/* =================== tabs =================== */
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");
+  ["dash","coverage","vault","dfir","notes"].forEach(t=>$("#tab-"+t).classList.toggle("hidden",t!==b.dataset.tab));
+  if(b.dataset.tab==="vault")renderVault();
+});
+
+/* =================== dashboard =================== */
+const catsEl=$("#cats");
+[["auto","Auto-detect"]].concat(CATS.map(c=>[c,CAT_LABEL[c]])).forEach(([v,lab])=>{
+  const c=el("span","chip"+(v===state.cat?" active":""));c.textContent=lab;c.dataset.v=v;
+  c.onclick=()=>{state.cat=v;document.querySelectorAll("#cats .chip").forEach(x=>x.classList.toggle("active",x.dataset.v===v));render();};
+  catsEl.appendChild(c);
+});
+$("#target").addEventListener("input",updateDetected);
+$("#target").addEventListener("keydown",e=>{if(e.key==="Enter")doSearchAll();});
+$("#searchAll").onclick=doSearchAll;
+
+function updateDetected(){
+  const q=$("#target").value.trim();
+  const d=$("#detected");
+  if(!q||state.cat!=="auto"){d.textContent="";return;}
+  const c=detectCat(q);
+  d.innerHTML = c?`Detected type: <b>${CAT_LABEL[c]}</b>`:"";
+}
+function activeCats(){
+  const q=$("#target").value.trim();
+  if(state.cat!=="auto") return [state.cat];
+  const c=detectCat(q);
+  return c?[c]:[];
+}
+function keyOk(s){return s.key && state.keys[s.key];}
+
+function srcRow(s,q){
+  const row=el("div","src");
+  const nm=el("div","nm");
+  const ty=el("span","ty "+s.t);ty.textContent=s.t.toUpperCase();
+  nm.appendChild(ty);
+  const name=el("span");name.textContent=s.n;nm.appendChild(name);
+  if(s.key){const kb=el("span","keyb"+(keyOk(s)?" ok":""));kb.textContent=keyOk(s)?"●key":"○key";kb.title=keyOk(s)?s.key+" key set":"needs "+s.key+" key";nm.appendChild(kb);}
+  row.appendChild(nm);
+  const act=el("div","act");
+  if(s.t==="cli"){
+    const cmd=s.c.replace("{q}",q?shQuote(q):"<target>");
+    const b=el("button","btn sm ghost");b.textContent="Copy";
+    b.onclick=()=>{if(!q){toast("Enter a target");return;}copy(cmd);};
+    act.appendChild(b);
+  }else{
+    const url=s.u.includes("{q}")?s.u.replace("{q}",encodeURIComponent(q)):s.u;
+    const a=el("a","btn sm ghost");a.textContent="Open";a.href=(q||!s.u.includes("{q}"))?url:"#";a.target="_blank";a.rel="noopener noreferrer";
+    if(s.u.includes("{q}")&&!q)a.onclick=e=>{e.preventDefault();toast("Enter a target");};
+    act.appendChild(a);
+  }
+  row.appendChild(act);
+  return row;
+}
+
+function render(){
+  updateDetected();
+  const q=$("#target").value.trim();
+  const cats=activeCats();
+  const res=$("#results");res.innerHTML="";
+  if(!cats.length){res.innerHTML='<div class="empty">Enter a target and press <b>Search All</b> to assemble the recon plan.</div>';return;}
+  const groups=el("div","groups");
+  cats.forEach(cat=>{
+    const g=el("div","group");
+    const gh=el("div","gh");gh.innerHTML=`<span class="ic">${CAT_ICON[cat]}</span> ${CAT_LABEL[cat]}`;g.appendChild(gh);
+    SRC[cat].forEach(s=>g.appendChild(srcRow(s,q)));
+    groups.appendChild(g);
+  });
+  res.appendChild(groups);
+}
+
+function doSearchAll(){
+  const q=$("#target").value.trim();
+  if(!q){toast("Enter a target first");return;}
+  pushHistory(q);
+  render();
+  const cats=activeCats();
+  // assemble all CLI commands as a script + collect web urls
+  const cmds=[],urls=[];
+  cats.forEach(cat=>SRC[cat].forEach(s=>{
+    if(s.t==="cli") cmds.push("# "+s.n+"\n"+s.c.replace("{q}",shQuote(q)));
+    else if(s.u.includes("{q}")) urls.push(s.u.replace("{q}",encodeURIComponent(q)));
+  }));
+  // action bar at top of results
+  const bar=el("div","searchbar");bar.style.margin="6px 0 4px";
+  const c1=el("button","btn sm");c1.textContent="📋 Copy all commands ("+cmds.length+")";
+  c1.onclick=()=>copy("#!/usr/bin/env bash\nset -e\n\n"+cmds.join("\n\n")+"\n");
+  const c2=el("button","btn sm");c2.textContent="🚀 Open all web pivots ("+urls.length+")";
+  c2.onclick=()=>{if(!confirm("Open "+urls.length+" tabs? Your browser may ask to allow multiple pop-ups."))return;urls.forEach((u,i)=>setTimeout(()=>window.open(u,"_blank","noopener"),i*250));};
+  $("#results").prepend(bar);bar.appendChild(c1);bar.appendChild(c2);
+}
+
+/* history */
+function getHist(){try{return JSON.parse(localStorage.getItem(LS.hist))||[]}catch(e){return[]}}
+function pushHistory(q){let h=getHist().filter(x=>x!==q);h.unshift(q);h=h.slice(0,12);localStorage.setItem(LS.hist,JSON.stringify(h));renderHistory();}
+function renderHistory(){
+  const h=getHist(),box=$("#history");
+  if(!h.length){box.classList.add("hidden");return;}
+  box.classList.remove("hidden");box.innerHTML='<span class="lbl">Recent</span>';
+  h.forEach(q=>{const t=el("span","htag");t.textContent=q;t.onclick=()=>{$("#target").value=q;doSearchAll();};box.appendChild(t);});
+  const cl=el("span","htag");cl.textContent="✕ clear";cl.onclick=()=>{localStorage.removeItem(LS.hist);renderHistory();};box.appendChild(cl);
+}
+
+/* =================== coverage =================== */
+(function(){const g=$("#covgrid");COVERAGE.forEach(c=>{const d=el("div","cov");d.innerHTML="<b>✓</b>"+c;g.appendChild(d);});})();
+
+/* =================== DFIR =================== */
+(function(){const g=$("#dfirGrid");DFIR.forEach(t=>{
+  const c=el("div","dcard");
+  const dn=el("div","dn");const nm=el("span");nm.textContent=t.n;dn.appendChild(nm);
+  const tag=el("span","dtag");tag.textContent=t.t;dn.appendChild(tag);c.appendChild(dn);
+  const dd=el("div","dd");dd.textContent=t.d;c.appendChild(dd);
+  if(t.u){const a=el("a");a.href=t.u;a.target="_blank";a.rel="noopener noreferrer";a.textContent="Docs ↗";a.style.fontSize="12.5px";a.style.display="inline-block";a.style.marginTop="8px";c.appendChild(a);}
+  g.appendChild(c);
+});})();
+
+/* =================== vault (Web Crypto) =================== */
+const b64=u8=>btoa(String.fromCharCode(...u8));
+const ub64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+async function deriveKey(p,salt){const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(p),"PBKDF2",false,["deriveKey"]);return crypto.subtle.deriveKey({name:"PBKDF2",salt,iterations:200000,hash:"SHA-256"},base,{name:"AES-GCM",length:256},false,["encrypt","decrypt"]);}
+async function encJSON(o,p){const salt=crypto.getRandomValues(new Uint8Array(16)),iv=crypto.getRandomValues(new Uint8Array(12));const k=await deriveKey(p,salt);const ct=await crypto.subtle.encrypt({name:"AES-GCM",iv},k,new TextEncoder().encode(JSON.stringify(o)));return{v:1,salt:b64(salt),iv:b64(iv),ct:b64(new Uint8Array(ct))};}
+async function decJSON(b,p){const k=await deriveKey(p,ub64(b.salt));const pt=await crypto.subtle.decrypt({name:"AES-GCM",iv:ub64(b.iv)},k,ub64(b.ct));return JSON.parse(new TextDecoder().decode(pt));}
+function loadVault(){if(localStorage.getItem(LS.enc)){state.encrypted=true;state.unlocked=false;state.keys={};}else if(localStorage.getItem(LS.plain)){state.encrypted=false;state.unlocked=true;state.keys=JSON.parse(localStorage.getItem(LS.plain));}else{state.encrypted=false;state.unlocked=true;state.keys={};}}
+function persistPlain(){localStorage.setItem(LS.plain,JSON.stringify(state.keys));}
+function renderVault(){
+  const st=$("#vaultState"),pass=$("#passphrase"),body=$("#vaultBody");
+  const lock=$("#vaultUnlock"),enc=$("#vaultEncrypt"),dec=$("#vaultDecrypt");
+  if(state.encrypted&&!state.unlocked){
+    st.innerHTML='<span class="dot locked"></span> Vault encrypted — locked';
+    pass.classList.remove("hidden");lock.classList.remove("hidden");enc.classList.add("hidden");dec.classList.add("hidden");
+    body.innerHTML='<div class="hint">Enter your passphrase and press Unlock to view & edit keys.</div>';return;
+  }
+  pass.classList.add("hidden");lock.classList.add("hidden");enc.classList.remove("hidden");dec.classList.toggle("hidden",!state.encrypted);
+  st.innerHTML=state.encrypted?'<span class="dot open"></span> Unlocked (encrypted at rest)':'<span class="dot plain"></span> Plaintext — not encrypted';
+  body.innerHTML="";
+  SERVICES.forEach(s=>{
+    const row=el("div","vault-svc");const lab=el("label");lab.textContent=s;row.appendChild(lab);
+    const inp=el("input");inp.type="password";inp.value=state.keys[s]||"";inp.placeholder="—";
+    inp.oninput=()=>{if(inp.value)state.keys[s]=inp.value;else delete state.keys[s];if(!state.encrypted)persistPlain();};
+    row.appendChild(inp);
+    const rev=el("button","btn sm ghost");rev.textContent="👁";rev.onclick=()=>inp.type=inp.type==="password"?"text":"password";row.appendChild(rev);
+    body.appendChild(row);
+  });
+  if(state.encrypted){const n=el("div","hint");n.textContent='Edits stay in memory until you press "Encrypt & lock".';body.appendChild(n);}
+}
+$("#vaultUnlock").onclick=async()=>{const p=$("#passphrase").value;if(!p){toast("Enter passphrase");return;}try{state.keys=await decJSON(JSON.parse(localStorage.getItem(LS.enc)),p);state.unlocked=true;$("#passphrase").value="";renderVault();render();toast("Unlocked");}catch(e){toast("Wrong passphrase");}};
+$("#vaultEncrypt").onclick=async()=>{let p=$("#passphrase").value;if(!p){p=prompt("Set a vault passphrase (needed every unlock):");if(!p)return;}const b=await encJSON(state.keys,p);localStorage.setItem(LS.enc,JSON.stringify(b));localStorage.removeItem(LS.plain);state.encrypted=true;state.unlocked=true;$("#passphrase").value="";renderVault();toast("Encrypted & saved");};
+$("#vaultDecrypt").onclick=()=>{if(!confirm("Store keys in plaintext on this device?"))return;localStorage.removeItem(LS.enc);persistPlain();state.encrypted=false;renderVault();toast("Encryption removed");};
+$("#vaultClear").onclick=()=>{if(!confirm("Delete all stored keys from this browser?"))return;localStorage.removeItem(LS.enc);localStorage.removeItem(LS.plain);state.keys={};state.encrypted=false;state.unlocked=true;renderVault();render();toast("Vault cleared");};
+
+/* =================== notes =================== */
+const notes=$("#notes");notes.value=localStorage.getItem(LS.notes)||"";notes.oninput=()=>localStorage.setItem(LS.notes,notes.value);
+function download(name,text,type){const b=new Blob([text],{type});const a=el("a");a.href=URL.createObjectURL(b);a.download=name;a.click();URL.revokeObjectURL(a.href);}
+function stamp(){const d=new Date();return d.getFullYear()+""+String(d.getMonth()+1).padStart(2,"0")+String(d.getDate()).padStart(2,"0")+"-"+String(d.getHours()).padStart(2,"0")+String(d.getMinutes()).padStart(2,"0");}
+$("#exportMd").onclick=()=>{const t=$("#target").value.trim();download(`gofindme-${stamp()}.md`,`# GoFindMe Report\n\n- **Target:** ${t||"(none)"}\n- **Generated:** ${new Date().toString()}\n\n## Notes\n\n${notes.value||"_(empty)_"}\n`,"text/markdown");};
+$("#exportJson").onclick=()=>{download(`gofindme-${stamp()}.json`,JSON.stringify({target:$("#target").value.trim(),notes:notes.value,generated:new Date().toISOString()},null,2),"application/json");};
+$("#clearNotes").onclick=()=>{if(confirm("Clear case notes?")){notes.value="";localStorage.removeItem(LS.notes);}};
+
+/* =================== init =================== */
+loadVault();renderHistory();render();
+</script>
+</body>
+</html>

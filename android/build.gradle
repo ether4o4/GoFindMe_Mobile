@@ -1,0 +1,2 @@
+// Root build file. Plugin versions are declared in app/build.gradle and resolved
+// via the repositories in settings.gradle.

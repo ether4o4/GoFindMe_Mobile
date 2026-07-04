@@ -1,0 +1,18 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+        // Chaquopy plugin marker / artifacts.
+        maven { url 'https://chaquo.com/maven' }
+    }
+}
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url 'https://chaquo.com/maven' }
+    }
+}
+rootProject.name = 'GoFindMe'
+include ':app'

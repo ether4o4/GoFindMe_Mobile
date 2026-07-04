@@ -1,0 +1,7 @@
+fastapi>=0.110,<0.116
+uvicorn[standard]>=0.27,<0.35
+httpx>=0.26,<0.28
+cryptography>=41
+pydantic>=2.5,<3
+python-multipart>=0.0.9
+passlib[argon2]>=1.7.4

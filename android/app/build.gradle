@@ -1,0 +1,60 @@
+plugins {
+    id 'com.android.application' version '8.2.2'
+    id 'com.chaquo.python' version '15.0.1'
+}
+
+android {
+    namespace 'com.gofindme.app'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'com.gofindme.app'
+        minSdk 24
+        targetSdk 34
+        versionCode 2
+        versionName '1.0-portrait'
+        // Chaquopy builds one native payload per ABI; arm64 covers modern phones.
+        ndk { abiFilters 'arm64-v8a' }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+
+    buildTypes {
+        debug {}
+        release {
+            minifyEnabled false
+        }
+    }
+}
+
+chaquopy {
+    defaultConfig {
+        // Bundled CPython version (must be one Chaquopy ships).
+        version '3.11'
+        // CI passes the absolute path to the Python installed by setup-python
+        // (the hosted Python isn't reliably on the Gradle daemon's PATH).
+        def bp = System.getenv('CHAQUOPY_PYTHON')
+        if (bp) {
+            buildPython bp
+        } else {
+            buildPython 'python3', 'python'
+        }
+        pip {
+            // Pure-Python on Android: FastAPI + pydantic v1 (v2's Rust core
+            // won't build), plain uvicorn, httpx, passlib (pbkdf2 fallback).
+            install 'fastapi'
+            install 'pydantic<2'
+            install 'uvicorn'
+            install 'httpx'
+            install 'passlib'
+            install 'python-multipart'
+            // Native: pin to the exact version Chaquopy ships a prebuilt wheel for
+            // (otherwise pip falls back to the PyPI source dist and can't compile
+            // its Rust/OpenSSL code in the Chaquopy build env).
+            install 'cryptography==42.0.8'
+        }
+    }
+}

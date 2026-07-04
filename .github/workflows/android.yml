@@ -1,0 +1,76 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [main, 'claude/**']
+    paths:
+      - 'android/**'
+      - 'app/**'
+      - 'static/**'
+      - 'legacy/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # needed to publish the Release
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Python 3.11 (Chaquopy buildPython)
+        id: py
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Stage Python sources into the Android project
+        run: |
+          mkdir -p android/app/src/main/python
+          cp -r app static legacy android/app/src/main/python/
+          echo "Staged:" && ls android/app/src/main/python
+
+      # The runner's preinstalled Gradle (9.x) is too new for AGP 8.2.x, so pin 8.7.
+      - name: Set up Gradle 8.7
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.7'
+
+      - name: Build debug APK
+        working-directory: android
+        env:
+          CHAQUOPY_PYTHON: ${{ steps.py.outputs.python-path }}
+        run: gradle :app:assembleDebug --stacktrace --no-daemon
+
+      - name: Upload APK artifact (per-run, expires)
+        uses: actions/upload-artifact@v4
+        with:
+          name: gofindme-mobile-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      - name: Stage APK with a friendly name
+        run: cp android/app/build/outputs/apk/debug/app-debug.apk gofindme-mobile.apk
+
+      # Permanent download: a rolling "android-latest" release whose asset URL is
+      # stable and never expires. Re-uploaded on every successful build.
+      - name: Publish APK to rolling Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-latest
+          name: GoFindMe Mobile (latest portrait build)
+          prerelease: true
+          body: |
+            Self-contained GoFindMe **portrait mobile edition** (debug-signed).
+            Locked to portrait; UI tuned for tall phone screens.
+            Built from commit ${{ github.sha }}.
+            Download `gofindme-mobile.apk` below, then enable "install unknown
+            apps" on the phone to sideload it.
+          files: gofindme-mobile.apk

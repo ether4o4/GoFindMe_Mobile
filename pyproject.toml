@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gofindme"
+version = "1.0.0"
+description = "GoFindMe Investigations Console — a self-hosted OSINT/DFIR platform: case management, allowlisted recon tools, server-side provider APIs, auto-derived link-analysis graph, tamper-evident audit trail, and court-ready reporting."
+requires-python = ">=3.11"
+license = { text = "Proprietary" }
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.packages.find]
+include = ["app*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+asyncio_mode = "auto"
+markers = [
+    "network: test performs real outbound network calls (deselect with -m 'not network')",
+]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
