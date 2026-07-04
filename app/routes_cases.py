@@ -105,25 +105,46 @@ async def case_files_list(cid: int, _t: str = security.Auth) -> list[dict]:
     return files.list_files(cid)
 
 
-@router.post("/{cid}/files")
-async def case_files_upload(cid: int, uploads: list[UploadFile] = File(...),
-                            _t: str = security.Auth) -> dict:
-    if not cases.get_case(cid):
-        raise HTTPException(404, "No such case")
-    cap = settings().max_upload_bytes
-    saved = []
-    for up in uploads:
-        content = await up.read()
-        if not content:
-            continue
-        if len(content) > cap:
-            raise HTTPException(413, f"{up.filename or 'file'} exceeds the "
-                                     f"{cap // (1024 * 1024)} MB limit")
-        saved.append(files.save(cid, up.filename or "file", content, up.content_type))
-    if not saved:
-        raise HTTPException(422, "No file content received")
-    cases.touch(cid)
-    return {"ok": True, "files": saved}
+def _multipart_available() -> bool:
+    """FastAPI needs python-multipart to register any File()/Form() route, and it
+    raises at registration time if it's missing — which would take the whole app
+    down on import. Detect it so the upload route degrades gracefully instead."""
+    try:
+        import multipart  # noqa: F401 (provided by the python-multipart package)
+        return True
+    except Exception:
+        try:
+            import python_multipart  # noqa: F401 (newer import name)
+            return True
+        except Exception:
+            return False
+
+
+if _multipart_available():
+    @router.post("/{cid}/files")
+    async def case_files_upload(cid: int, uploads: list[UploadFile] = File(...),
+                                _t: str = security.Auth) -> dict:
+        if not cases.get_case(cid):
+            raise HTTPException(404, "No such case")
+        cap = settings().max_upload_bytes
+        saved = []
+        for up in uploads:
+            content = await up.read()
+            if not content:
+                continue
+            if len(content) > cap:
+                raise HTTPException(413, f"{up.filename or 'file'} exceeds the "
+                                         f"{cap // (1024 * 1024)} MB limit")
+            saved.append(files.save(cid, up.filename or "file", content, up.content_type))
+        if not saved:
+            raise HTTPException(422, "No file content received")
+        cases.touch(cid)
+        return {"ok": True, "files": saved}
+else:  # pragma: no cover - only on a build without python-multipart bundled
+    @router.post("/{cid}/files")
+    async def case_files_upload_unavailable(cid: int, _t: str = security.Auth) -> dict:
+        raise HTTPException(503, "File upload isn't available in this build "
+                                 "(python-multipart is not bundled).")
 
 
 @router.get("/{cid}/files/{fid}/download")

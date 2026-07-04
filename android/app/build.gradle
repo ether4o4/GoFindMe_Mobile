@@ -50,7 +50,9 @@ chaquopy {
             install 'uvicorn'
             install 'httpx'
             install 'passlib'
-            install 'python-multipart'
+            // Required by FastAPI for the case file-upload route; pin so the
+            // resolver reliably bundles it (its absence would break app import).
+            install 'python-multipart==0.0.9'
             // Native: pin to the exact version Chaquopy ships a prebuilt wheel for
             // (otherwise pip falls back to the PyPI source dist and can't compile
             // its Rust/OpenSSL code in the Chaquopy build env).
