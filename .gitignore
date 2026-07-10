@@ -1,0 +1,27 @@
+# GoFindMe runtime data
+/data/
+*.db
+*.db-wal
+*.db-shm
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# PyInstaller build output
+/build/
+/dist/
+*.manifest
+
+# OS / editors
+.DS_Store
+*.swp
+.idea/
+.vscode/
