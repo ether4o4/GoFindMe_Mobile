@@ -12,6 +12,31 @@ the whole console runs on the phone with nothing else to install.
 
 ---
 
+## Two ways to run it
+
+On first launch the app shows a **connection screen** with two choices:
+
+1. **Connect to my server (recommended)** — point the app at a GoFindMe server
+   running on your **PC or VPS** and use the phone as a pure dashboard. The PC
+   runs the real CLI tools (sherlock, amass, …) and holds your API keys; the
+   phone just shows the console. **To reach it when you're not on the same
+   Wi-Fi**, put the PC on a private tunnel — **[Tailscale](https://tailscale.com)**
+   is the easy, free way: install it on the PC and phone, run
+   `sudo tailscale serve --bg 8000` on the PC, and paste the resulting
+   `https://<machine>.tailXXXX.ts.net` URL into the app. No port-forwarding, no
+   public exposure, works over cellular. (A VPS with an HTTPS address works too.)
+2. **Run on this phone** — the self-contained bundled server (API providers,
+   encrypted vault, personal-footprint data layer). No CLI tools — those can't
+   run on Android — so username/name searches come back empty here; it's most
+   useful once you add API keys under **Sources**.
+
+Long-press the **Back** button anytime to return to the connection screen and
+switch servers. The chosen server is remembered between launches.
+
+> Reaching a home PC from anywhere genuinely requires a tunnel or public host —
+> a phone on cellular can't otherwise see your LAN. Tailscale is the simplest;
+> the app itself just loads whatever URL you give it.
+
 ## What makes this the "mobile" edition
 
 This repo is a downstream, phone-tuned variant of GoFindMe. The backend, vault,
